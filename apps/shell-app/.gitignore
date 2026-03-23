@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+coverage/
+
+# Vite cache
+.vite/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env files (keep structure but hide secrets)
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+jest.config.js.snap
+
+# Lock files (keep ONE depending on team standard)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Federation artifacts (important for MFEs)
+remoteEntry.js
+*.map
+
+# Temp/debug
+tmp/
+temp/
+
+# Optional: screenshots / recordings (demo files)
+recordings/
+screenshots/
