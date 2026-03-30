@@ -1,0 +1,72 @@
+[
+  {
+    "id": "naming-1",
+    "category": "naming",
+    "text": "Variables should use camelCase naming convention."
+  },
+  {
+    "id": "naming-2",
+    "category": "naming",
+    "text": "Class names should use PascalCase. Example: UserAccount, OrderService."
+  },
+  {
+    "id": "naming-3",
+    "category": "naming",
+    "text": "Function names should be descriptive and indicate action. Avoid vague names like doStuff or handleIt."
+  },
+  {
+    "id": "naming-4",
+    "category": "naming",
+    "text": "Constants should be written in uppercase with underscores. Example: MAX_RETRIES, API_URL."
+  },
+  {
+    "id": "error-1",
+    "category": "error-handling",
+    "text": "Functions should include try-catch blocks for error handling."
+  },
+  {
+    "id": "error-2",
+    "category": "error-handling",
+    "text": "Avoid empty catch blocks. Always log or handle errors appropriately."
+  },
+  {
+    "id": "error-3",
+    "category": "error-handling",
+    "text": "Return meaningful error messages instead of generic ones like 'Something went wrong'."
+  },
+  {
+    "id": "error-4",
+    "category": "error-handling",
+    "text": "Validate inputs before processing to reduce runtime errors."
+  },
+  {
+    "id": "security-1",
+    "category": "security",
+    "text": "API keys should never be exposed in frontend code."
+  },
+  {
+    "id": "security-2",
+    "category": "security",
+    "text": "Always validate and sanitize user inputs to prevent injection attacks."
+  },
+  {
+    "id": "security-3",
+    "category": "security",
+    "text": "Use HTTPS for all API requests to ensure secure data transmission."
+  },
+  {
+    "id": "security-4",
+    "category": "security",
+    "text": "Do not store passwords in plain text. Always hash passwords using a secure algorithm."
+  },
+  {
+    "id": "performance-1",
+    "category": "performance",
+    "text": "Avoid unnecessary loops and redundant computations to improve performance."
+  },
+  {
+    "id": "performance-2",
+    "category": "performance",
+    "text": "Use efficient data structures such as maps or sets when appropriate."
+  }
+]
