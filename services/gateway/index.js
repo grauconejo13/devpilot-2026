@@ -1,42 +1,70 @@
-import 'dotenv/config';
-
-import http from 'http';
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
+import { ApolloGateway, IntrospectAndCompose, RemoteGraphQLDataSource } from '@apollo/gateway';
 import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4';
-import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import {
-  ApolloGateway,
-  IntrospectAndCompose,
-  RemoteGraphQLDataSource
-} from '@apollo/gateway';
+import { expressMiddleware } from '@as-integrations/express4';
 
-// Forwards cookies from the browser to subgraphs and relays Set-Cookie back — no auth logic here
+dotenv.config();
+
 class CookieForwardingDataSource extends RemoteGraphQLDataSource {
   willSendRequest({ request, context }) {
-    if (context.req?.headers?.cookie) {
-      request.http.headers.set('cookie', context.req.headers.cookie);
+    const cookie = context?.req?.headers?.cookie;
+    if (cookie) {
+      request.http.headers.set('cookie', cookie);
     }
+
+    const authHeader = context?.req?.headers?.authorization;
+    if (authHeader) {
+      request.http.headers.set('authorization', authHeader);
+    }
+
+    request.http.headers.set('x-from-gateway', 'true');
   }
 
-  async didReceiveResponse({ response, context }) {
-    const setCookie = response.http.headers.get('set-cookie');
-    if (setCookie && context.res) {
-      const incoming = Array.isArray(setCookie) ? setCookie : [setCookie];
-      const existing = context.res.getHeader('set-cookie') ?? [];
-      const existingArray = Array.isArray(existing) ? existing : [String(existing)];
-      context.res.setHeader('set-cookie', [...existingArray, ...incoming]);
+  didReceiveResponse({ response, context }) {
+    if (!response?.http?.headers) {
+      return response;
     }
+
+    const setCookieHeader = response.http.headers.get('set-cookie');
+    if (setCookieHeader) {
+      context?.res?.append?.('Set-Cookie', setCookieHeader);
+    }
+
+    if (typeof response.http.headers.getSetCookie === 'function') {
+      const cookies = response.http.headers.getSetCookie();
+      cookies.forEach((cookie) => {
+        context?.res?.append?.('Set-Cookie', cookie);
+      });
+    }
+
     return response;
   }
 }
 
+const app = express();
+
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true
+  })
+);
+
+app.use(express.json());
+
+app.get('/health', (_, res) => {
+  res.status(200).json({
+    ok: true,
+    service: 'gateway'
+  });
+});
+
 const gateway = new ApolloGateway({
   supergraphSdl: new IntrospectAndCompose({
     subgraphs: [
-      { name: 'auth',     url: process.env.AUTH_SERVICE_URL     || 'http://localhost:4001/graphql' },
-      { name: 'projects', url: process.env.PROJECTS_SERVICE_URL || 'http://localhost:4002/graphql' }
+      { name: 'auth', url: process.env.AUTH_SUBGRAPH_URL }
     ]
   }),
   buildService({ url }) {
@@ -44,29 +72,22 @@ const gateway = new ApolloGateway({
   }
 });
 
-const app = express();
-const httpServer = http.createServer(app);
-
 const server = new ApolloServer({
-  gateway,
-  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })]
+  gateway
 });
 
 await server.start();
 
 app.use(
   '/graphql',
-  cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
-    credentials: true
-  }),
-  express.json(),
   expressMiddleware(server, {
     context: async ({ req, res }) => ({ req, res })
   })
 );
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4001;
 
-await new Promise((resolve) => httpServer.listen({ port: PORT }, resolve));
-console.log(`[gateway] Running at http://localhost:${PORT}/graphql`);
+app.listen(PORT, () => {
+  console.log(`✅ Gateway running at http://localhost:${PORT}/graphql`);
+  console.log(`✅ Health check at http://localhost:${PORT}/health`);
+});

@@ -1,4 +1,4 @@
-{
+ {
   "name": "gateway",
   "version": "1.0.0",
   "description": "Apollo Federation Gateway for DevPilot 2026",
@@ -11,6 +11,7 @@
   "dependencies": {
     "@apollo/gateway": "^2.9.0",
     "@apollo/server": "^4.13.0",
+    "@as-integrations/express4": "^1.1.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
