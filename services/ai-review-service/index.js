@@ -1,33 +1,19 @@
-import "dotenv/config";
 import express from "express";
-import { generateReviewWithRetry } from "./services/ai-service.js";
+import cors from "cors";
+import { reviewCode } from "./services/ai-service.js";
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("AI Review Service Running");
-});
-
-// Main API Route
 app.post("/review", async (req, res) => {
-  try {
-    const { code, language } = req.body;
+  const { code } = req.body;
 
-    if (!code) {
-      return res.status(400).json({ error: "Code is required" });
-    }
+  const result = await reviewCode(code);
 
-    const result = await generateReviewWithRetry(code, language);
-
-    res.json(result);
-  } catch (err) {
-    console.error("ERROR:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
+  res.json(result);
 });
 
-const PORT = 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(4003, () => {
+  console.log("🚀 AI Review Service running on 4003");
 });

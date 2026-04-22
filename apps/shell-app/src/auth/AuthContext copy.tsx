@@ -1,22 +1,20 @@
 import { createContext, useContext } from "react";
+import { useQuery } from "@apollo/client";
+import { CURRENT_USER } from "../graphql/auth";
 
 const AuthContext = createContext<any>(null);
 
-// 🔥 TEMP USER (bypass login)
-const fakeUser = {
-  id: "dev-test",
-  username: "dev",
-  email: "dev@test.com",
-  role: "developer",
-};
-
 export const AuthProvider = ({ children }: any) => {
+const { data, loading, refetch } = useQuery(CURRENT_USER, {
+  fetchPolicy: "network-only",
+});
+
   return (
     <AuthContext.Provider
       value={{
-        user: fakeUser,   // 🔥 always logged in
-        loading: false,
-        refetchUser: () => {},
+        user: data?.currentUser,
+        loading,
+        refetchUser: refetch,
       }}
     >
       {children}

@@ -2,14 +2,15 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ApolloProvider } from "@apollo/client";
 import { client } from "./apollo/client";
 import { AuthProvider } from "./auth/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute";
+
 import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-
-const ProjectsApp = () => <h2>Projects MFE</h2>;
-const AIReviewApp = () => <h2>AI Review MFE</h2>;
+import ProjectsPage from "./pages/ProjectsPage";
+import AIReviewPage from "./pages/AIReviewPage";
 
 function App() {
   return (
@@ -26,7 +27,7 @@ function App() {
                 path="/projects"
                 element={
                   <ProtectedRoute>
-                    <ProjectsApp />
+                    <ProjectsPage />
                   </ProtectedRoute>
                 }
               />
@@ -35,7 +36,7 @@ function App() {
                 path="/ai-review"
                 element={
                   <ProtectedRoute>
-                    <AIReviewApp />
+                    <AIReviewPage />
                   </ProtectedRoute>
                 }
               />

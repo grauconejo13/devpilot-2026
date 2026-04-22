@@ -1,120 +1,61 @@
-import OpenAI from "openai";
-import { retrieveRelevantChunks } from "../retrieval.js";
+import { GoogleGenAI } from "@google/genai";
+import dotenv from "dotenv";
+import { retrieveRelevantChunks } from "./retrieval.js";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+dotenv.config();
+
+const genAI = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
+export async function reviewCode(code) {
+  try {
+    const chunks = await retrieveRelevantChunks(code);
 
-// Core function
+    const context = chunks
+      .map((c) => `SOURCE: ${c.source}\n${c.text}`)
+      .join("\n\n");
 
-export async function reviewCode(studentCode, language = null) {
-  const chunks = await retrieveRelevantChunks(studentCode, {
-    language,
-    topK: 5,
-  });
+    const prompt = `
+You are a strict code review API.
 
-  const context = chunks
-    .map((c, i) => `Rule ${i + 1}: ${c.text}`)
-    .join("\n");
+RULES:
+- Output ONLY valid JSON
+- No markdown
+- No explanation
 
-  const prompt = `
-You are a strict senior code reviewer.
+Return format:
+{
+  "issues": [],
+  "suggestions": [],
+  "confidence": number,
+  "summary": "string",
+  "citations": []
+}
 
-You MUST return ONLY valid JSON.
-
-Do NOT include explanations outside JSON.
-
-------------------------------------
-
-REFERENCE RULES:
+CONTEXT:
 ${context}
 
-------------------------------------
-
-STUDENT CODE:
-${studentCode}
-
-------------------------------------
-
-Return JSON in this EXACT format:
-
-{
-  "issues": [
-    {
-      "message": "string",
-      "severity": "low | medium | high"
-    }
-  ],
-  "suggestions": [
-    "string"
-  ],
-  "score": number (0-10),
-  "summary": "string"
-}
+CODE:
+${code}
 `;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    temperature: 0.2,
-    messages: [
-      {
-        role: "system",
-        content: "You are a strict JSON-only API.",
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
-    ],
-  });
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
 
-  const text = response.choices[0].message.content;
+    const text = result.text;
 
-  try {
     return JSON.parse(text);
   } catch (err) {
-    console.log("JSON parse failed, raw output:");
-    console.log(text);
+    console.error("AI ERROR:", err);
 
     return {
       issues: [],
       suggestions: [],
-      score: 0,
-      summary: "Failed to parse AI response",
+      confidence: 0,
+      summary: "AI failed",
     };
   }
-}
-
-// Retry Wrapper
-export async function generateReviewWithRetry(
-  studentCode,
-  language = null,
-  retries = 3
-) {
-  let lastError;
-
-  for (let i = 0; i < retries; i++) {
-    try {
-      const result = await reviewCode(studentCode, language);
-
-      if (result && typeof result.score === "number") {
-        return result;
-      }
-
-      throw new Error("Invalid AI response structure");
-    } catch (err) {
-      lastError = err;
-      console.log(`Attempt ${i + 1} failed`);
-    }
-  }
-
-  console.log("All retries failed:", lastError);
-
-  return {
-    issues: [],
-    suggestions: [],
-    score: 0,
-    summary: "AI failed after multiple retry attempts",
-  };
 }
